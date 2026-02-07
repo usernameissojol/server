@@ -49,6 +49,7 @@ import ecourierRoutes from "./routes/ecourier.routes";
 import smsRoutes from "./routes/sms.routes";
 import paymentMethodRoutes from "./routes/payment-method.routes";
 import socialAuthRoutes from "./routes/social-auth.routes";
+import dailyTargetRoutes from "./routes/daily-target.routes";
 
 dotenv.config();
 
@@ -100,7 +101,6 @@ app.get("/", (req: Request, res: Response) => {
 const uploadsPath = path.join(process.cwd(), "uploads");
 const subfolders = ["gallery", "products", "profile", "banners", "popups", "settings", "categories", "brands"];
 
-// Ensure folders exist
 if (!fs.existsSync(uploadsPath)) fs.mkdirSync(uploadsPath);
 subfolders.forEach(folder => {
     const p = path.join(uploadsPath, folder);
@@ -125,7 +125,7 @@ app.use("/api/uploads", (req: Request, res: Response, next: NextFunction) => {
 // ==========================
 // API Routes
 // ==========================
-app.use("/api/daily-targets", require("./routes/daily-target.routes").default);
+app.use("/api/daily-targets", dailyTargetRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", authRoutes);
 app.use("/api/user", userRoutes);
@@ -170,7 +170,7 @@ app.use("/api/payment-methods", paymentMethodRoutes);
 app.use("/api/social", socialAuthRoutes);
 
 // 404 for undefined /api
-app.all("/api/*", (req, res) => {
+app.all("/api/*", (req: Request, res: Response) => {
     res.status(404).json({ status: "error", message: `Route not found: ${req.originalUrl}` });
 });
 
@@ -193,7 +193,7 @@ if (process.env.NODE_ENV === "production") {
     console.log(`📦 Serving frontend from: ${frontendPath}`);
     app.use(express.static(frontendPath));
 
-    app.get("*", (req, res) => {
+    app.get("*", (req: Request, res: Response) => {
         if (req.path.startsWith("/api")) {
             return res.status(404).json({ status: "error", message: `API route not found: ${req.originalUrl}` });
         }
