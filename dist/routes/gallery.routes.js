@@ -1,0 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const gallery_controller_1 = require("../controllers/gallery.controller");
+const auth_middleware_1 = require("../middleware/auth.middleware");
+const upload_1 = require("../middleware/upload");
+const router = (0, express_1.Router)();
+router.get("/", gallery_controller_1.getGalleryItems);
+router.post("/", auth_middleware_1.isAdmin, upload_1.upload.array("images[]"), gallery_controller_1.uploadGalleryItem);
+router.post("/bulk-delete", auth_middleware_1.isAdmin, gallery_controller_1.bulkDeleteGalleryItems);
+router.delete("/:id", auth_middleware_1.isAdmin, gallery_controller_1.deleteGalleryItem);
+exports.default = router;

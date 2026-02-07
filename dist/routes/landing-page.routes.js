@@ -1,0 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const landing_page_controller_1 = require("../controllers/landing-page.controller");
+const auth_middleware_1 = require("../middleware/auth.middleware");
+const router = (0, express_1.Router)();
+router.get("/", landing_page_controller_1.getLandingPages);
+router.get("/:id", landing_page_controller_1.getLandingPageByParam);
+router.post("/", auth_middleware_1.isAdmin, landing_page_controller_1.createLandingPage);
+router.post("/:id", auth_middleware_1.isAdmin, landing_page_controller_1.updateLandingPage);
+router.delete("/:id", auth_middleware_1.isAdmin, landing_page_controller_1.deleteLandingPage);
+exports.default = router;

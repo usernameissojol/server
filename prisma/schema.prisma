@@ -1,0 +1,774 @@
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-1.1.x", "debian-openssl-3.0.x", "linux-musl", "linux-musl-openssl-3.0.x", "rhel-openssl-1.1.x", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model activity_logs {
+  id         Int      @id @default(autoincrement())
+  user_name  String   @db.VarChar(100)
+  action     String   @db.VarChar(255)
+  target     String   @db.VarChar(255)
+  type       String   @db.VarChar(50)
+  created_at DateTime @default(now()) @db.Timestamp(0)
+}
+
+model admins {
+  id          Int            @id @default(autoincrement())
+  name        String         @db.VarChar(100)
+  email       String         @unique(map: "email") @db.VarChar(100)
+  password    String         @db.VarChar(255)
+  role        String?        @default("admin") @db.VarChar(50)
+  status      admins_status? @default(active)
+  permissions String?        @db.Text
+  last_login  DateTime?      @db.DateTime(0)
+  created_at  DateTime       @default(now()) @db.Timestamp(0)
+  image       String?        @db.VarChar(255)
+  address     String?        @db.Text
+  phone       String?        @db.VarChar(20)
+  expenses    expenses[]
+  gallery     gallery[]
+}
+
+model api_settings {
+  id    Int     @id @default(autoincrement())
+  key   String  @unique(map: "key") @db.VarChar(100)
+  value String? @db.Text
+  group String? @default("general") @db.VarChar(50)
+}
+
+model attributes {
+  id                 Int                  @id @default(autoincrement())
+  name               String               @db.VarChar(100)
+  slug               String?              @db.VarChar(100)
+  type               String?              @default("Dropdown") @db.VarChar(50)
+  values             String?              @db.Text
+  status             String?              @default("publish") @db.VarChar(20)
+  icon               String?              @db.VarChar(50)
+  created_at         DateTime             @default(now()) @db.Timestamp(0)
+  product_attributes product_attributes[]
+}
+
+model banners {
+  id         Int             @id @default(autoincrement())
+  title      String          @db.VarChar(255)
+  subtitle   String?         @db.VarChar(255)
+  image      String          @db.VarChar(255)
+  link       String?         @db.VarChar(255)
+  position   String?         @default("home") @db.VarChar(50)
+  order      Int?            @default(0)
+  status     banners_status? @default(active)
+  created_at DateTime        @default(now()) @db.Timestamp(0)
+}
+
+model blacklist {
+  id         Int            @id @default(autoincrement())
+  type       blacklist_type
+  value      String         @db.VarChar(255)
+  reason     String?        @db.Text
+  created_at DateTime       @default(now()) @db.Timestamp(0)
+
+  @@index([value], map: "value")
+}
+
+model blog_categories {
+  id          Int      @id @default(autoincrement())
+  name        String   @db.VarChar(100)
+  slug        String   @unique(map: "slug") @db.VarChar(100)
+  description String?  @db.Text
+  created_at  DateTime @default(now()) @db.Timestamp(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model blogs {
+  id               Int           @id @default(autoincrement())
+  title            String        @db.VarChar(255)
+  slug             String        @unique(map: "slug") @db.VarChar(255)
+  excerpt          String?       @db.Text
+  content          String        @db.LongText
+  featured_image   String?       @db.VarChar(255)
+  category         String?       @default("General") @db.VarChar(100)
+  author           String?       @db.VarChar(100)
+  read_time        String?       @db.VarChar(50)
+  tags             String?       @db.Text
+  views            Int?          @default(0)
+  status           blogs_status? @default(draft)
+  is_featured      Boolean?      @default(false)
+  published_at     DateTime?     @db.DateTime(0)
+  created_at       DateTime      @default(now()) @db.Timestamp(0)
+  updated_at       DateTime      @default(now()) @db.Timestamp(0)
+  meta_title       String?       @db.VarChar(255)
+  meta_description String?       @db.Text
+  meta_keywords    String?       @db.Text
+}
+
+model brands {
+  id       Int        @id @default(autoincrement())
+  name     String     @db.VarChar(100)
+  logo     String?    @db.VarChar(255)
+  products products[]
+}
+
+model business_settings {
+  id    Int     @id @default(autoincrement())
+  key   String  @unique(map: "key") @db.VarChar(100)
+  value String? @db.Text
+  group String? @default("general") @db.VarChar(50)
+}
+
+model carousels {
+  id          Int               @id @default(autoincrement())
+  title       String            @db.VarChar(255)
+  description String?           @db.Text
+  image       String            @db.VarChar(255)
+  link        String?           @db.VarChar(255)
+  button_text String?           @db.VarChar(100)
+  order       Int?              @default(0)
+  status      carousels_status? @default(active)
+  created_at  DateTime          @default(now()) @db.Timestamp(0)
+}
+
+model categories {
+  id           Int        @id @default(autoincrement())
+  name         String     @db.VarChar(100)
+  slug         String     @unique(map: "slug") @db.VarChar(100)
+  description  String?    @db.Text
+  priority     Int?       @default(0)
+  status       String?    @default("active") @db.VarChar(20)
+  show_on_home Boolean?   @default(true)
+  image        String?    @db.VarChar(255)
+  parent_id    Int?
+  icon         String?    @db.VarChar(255)
+  parent       categories? @relation("CategoryToCategory", fields: [parent_id], references: [id], onUpdate: Restrict, map: "categories_ibfk_1")
+  children     categories[] @relation("CategoryToCategory")
+  products     products[]
+
+  @@index([parent_id], map: "parent_id")
+}
+
+model coupons {
+  id            Int             @id @default(autoincrement())
+  code          String          @unique(map: "code") @db.VarChar(50)
+  type          coupons_type?   @default(percentage)
+  value         Decimal         @db.Decimal(10, 2)
+  min_purchase  Decimal?        @default(0.00) @db.Decimal(10, 2)
+  max_discount  Decimal?        @db.Decimal(10, 2)
+  usage_limit   Int?
+  used_count    Int?            @default(0)
+  start_date    DateTime?       @db.DateTime(0)
+  end_date      DateTime?       @db.DateTime(0)
+  status        coupons_status? @default(active)
+  created_at    DateTime        @default(now()) @db.Timestamp(0)
+  is_auto       Boolean?        @default(false)
+  min_qty       Int?            @default(0)
+  free_shipping Boolean?        @default(false)
+}
+
+model daily_targets {
+  id                Int      @id @default(autoincrement())
+  target_date       DateTime @unique(map: "target_date") @db.Date
+  revenue_target    Decimal? @default(0.00) @db.Decimal(10, 2)
+  orders_target     Int?     @default(0)
+  visits_target     Int?     @default(0)
+  conversion_target Decimal? @default(0.00) @db.Decimal(5, 2)
+  created_at        DateTime @default(now()) @db.Timestamp(0)
+  updated_at        DateTime @default(now()) @db.Timestamp(0)
+}
+
+model delivery_locations {
+  id             Int      @id @default(autoincrement())
+  name           String   @unique(map: "name") @db.VarChar(100)
+  regular_charge Decimal? @default(0.00) @db.Decimal(10, 2)
+  express_charge Decimal? @default(0.00) @db.Decimal(10, 2)
+  is_active      Boolean? @default(true)
+  created_at     DateTime @default(now()) @db.Timestamp(0)
+  updated_at     DateTime @default(now()) @db.Timestamp(0)
+}
+
+model delivery_settings {
+  id    Int     @id @default(autoincrement())
+  key   String  @unique(map: "key") @db.VarChar(100)
+  value String? @db.Text
+  group String? @default("general") @db.VarChar(50)
+}
+
+model expenses {
+  id          Int      @id @default(autoincrement())
+  category    String   @db.VarChar(100)
+  amount      Decimal  @db.Decimal(10, 2)
+  description String?  @db.Text
+  date        DateTime @db.Date
+  created_by  Int?
+  created_at  DateTime @default(now()) @db.Timestamp(0)
+  admins      admins?  @relation(fields: [created_by], references: [id], onUpdate: Restrict, map: "expenses_ibfk_1")
+
+  @@index([created_by], map: "created_by")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model features {
+  id         Int              @id @default(autoincrement())
+  title      String           @db.VarChar(255)
+  icon       String           @db.VarChar(50)
+  color      String?          @default("text-primary") @db.VarChar(50)
+  bg_color   String?          @default("bg-primary/10") @db.VarChar(50)
+  order      Int?             @default(0)
+  status     features_status? @default(active)
+  created_at DateTime         @default(now()) @db.Timestamp(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model footer_links {
+  id         Int                  @id @default(autoincrement())
+  section    String               @db.VarChar(100)
+  title      String               @db.VarChar(255)
+  url        String               @db.VarChar(255)
+  order      Int?                 @default(0)
+  status     footer_links_status? @default(active)
+  created_at DateTime             @default(now()) @db.Timestamp(0)
+}
+
+model gallery {
+  id          Int      @id @default(autoincrement())
+  title       String?  @db.VarChar(255)
+  image       String   @db.VarChar(255)
+  category    String?  @db.VarChar(100)
+  uploaded_by Int?
+  created_at  DateTime @default(now()) @db.Timestamp(0)
+  admins      admins?  @relation(fields: [uploaded_by], references: [id], onUpdate: Restrict, map: "gallery_ibfk_1")
+
+  @@index([uploaded_by], map: "uploaded_by")
+}
+
+model hero_banners {
+  id          Int                    @id @default(autoincrement())
+  title       String?                @db.VarChar(255)
+  subtitle    String?                @db.VarChar(255)
+  image       String                 @db.VarChar(255)
+  link        String?                @db.VarChar(255)
+  button_text String?                @db.VarChar(100)
+  position    hero_banners_position? @default(main)
+  order       Int?                   @default(0)
+  status      hero_banners_status?   @default(active)
+  created_at  DateTime               @default(now()) @db.Timestamp(0)
+}
+
+model income_categories {
+  id          Int       @id @default(autoincrement())
+  name        String    @db.VarChar(255)
+  description String?   @db.Text
+  status      Boolean?  @default(true)
+  created_at  DateTime  @default(now()) @db.Timestamp(0)
+  updated_at  DateTime  @default(now()) @db.Timestamp(0)
+  revenue     revenue[]
+}
+
+model landing_page_templates {
+  id            Int      @id @default(autoincrement())
+  name          String   @db.VarChar(255)
+  description   String?  @db.Text
+  content       String   @db.LongText
+  preview_image String?  @db.VarChar(255)
+  created_at    DateTime @default(now()) @db.Timestamp(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model landing_pages {
+  id           Int                   @id @default(autoincrement())
+  title        String                @db.VarChar(255)
+  slug         String                @unique(map: "slug") @db.VarChar(255)
+  template     String?               @default("storefront") @db.VarChar(100)
+  type         String?               @default("Landing") @db.VarChar(50)
+  status       landing_pages_status? @default(Published)
+  content      String                @db.LongText
+  html_content String?               @db.LongText
+  views        Int?                  @default(0)
+  created_at   DateTime              @default(now()) @db.Timestamp(0)
+  updated_at   DateTime              @default(now()) @db.Timestamp(0)
+}
+
+model order_items {
+  id         Int     @id @default(autoincrement())
+  order_id   Int
+  product_id Int
+  quantity   Int
+  price      Decimal @db.Decimal(10, 2)
+  orders     orders  @relation(fields: [order_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "order_items_ibfk_1")
+
+  @@index([order_id], map: "order_id")
+}
+
+model orders {
+  id              Int              @id @default(autoincrement())
+  user_id         Int?
+  guest_name      String?          @db.VarChar(100)
+  guest_phone     String?          @db.VarChar(20)
+  address         String           @db.Text
+  subtotal        Decimal          @db.Decimal(10, 2)
+  delivery_fee    Decimal?         @default(0.00) @db.Decimal(10, 2)
+  discount_amount Decimal?         @default(0.00) @db.Decimal(10, 2)
+  total           Decimal          @db.Decimal(10, 2)
+  p_method        String?          @default("COD") @db.VarChar(50)
+  p_status        orders_p_status? @default(unpaid)
+  status          String?          @default("Pending") @db.VarChar(50)
+  courier_logo    String?          @db.VarChar(255)
+  tracking_code   String?          @db.VarChar(100)
+  note            String?          @db.Text
+  created_at      DateTime         @default(now()) @db.Timestamp(0)
+  courier_name    String?          @db.VarChar(100)
+  points_awarded  Boolean?         @default(false)
+  used_points     Int?             @default(0)
+  order_items     order_items[]
+  transactions    transactions[]
+}
+
+model pages {
+  id         Int           @id @default(autoincrement())
+  title      String        @db.VarChar(255)
+  slug       String        @unique(map: "slug") @db.VarChar(255)
+  content    String?       @db.LongText
+  type       String?       @default("Corporate") @db.VarChar(50)
+  status     pages_status? @default(published)
+  created_at DateTime      @default(now()) @db.Timestamp(0)
+  updated_at DateTime      @default(now()) @db.Timestamp(0)
+}
+
+model payment_methods {
+  id             Int      @id @default(autoincrement())
+  provider       String   @db.VarChar(50)
+  type           String   @db.VarChar(50)
+  account_number String   @db.VarChar(20)
+  instruction    String?  @db.Text
+  is_active      Boolean? @default(true)
+  created_at     DateTime @default(now()) @db.Timestamp(0)
+  updated_at     DateTime @default(now()) @db.Timestamp(0)
+}
+
+model payment_settings {
+  id    Int     @id @default(autoincrement())
+  key   String  @unique(map: "key") @db.VarChar(100)
+  value String? @db.Text
+  group String? @default("general") @db.VarChar(50)
+}
+
+model payout_methods {
+  id             Int       @id @default(autoincrement())
+  type           String    @db.VarChar(50)
+  name           String    @db.VarChar(255)
+  account_number String    @db.VarChar(100)
+  account_holder String?   @db.VarChar(255)
+  details        String?   @db.Text
+  is_default     Boolean?  @default(false)
+  status         Boolean?  @default(true)
+  created_at     DateTime  @default(now()) @db.Timestamp(0)
+  updated_at     DateTime  @default(now()) @db.Timestamp(0)
+  payouts        payouts[]
+}
+
+model payouts {
+  id             Int             @id @default(autoincrement())
+  method_id      Int?
+  amount         Decimal         @db.Decimal(10, 2)
+  status         payouts_status? @default(pending)
+  reference_id   String?         @db.VarChar(100)
+  notes          String?         @db.Text
+  requested_at   DateTime        @default(now()) @db.Timestamp(0)
+  processed_at   DateTime?       @db.Timestamp(0)
+  payout_methods payout_methods? @relation(fields: [method_id], references: [id], onUpdate: Restrict, map: "payouts_ibfk_1")
+
+  @@index([method_id], map: "method_id")
+}
+
+model popups {
+  id          Int               @id @default(autoincrement())
+  title       String            @db.VarChar(255)
+  content     String            @db.Text
+  image       String?           @db.VarChar(255)
+  button_text String?           @db.VarChar(100)
+  button_link String?           @db.VarChar(255)
+  delay       Int?              @default(3000)
+  frequency   popups_frequency? @default(session)
+  status      popups_status?    @default(inactive)
+  created_at  DateTime          @default(now()) @db.Timestamp(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model pre_orders {
+  id              Int                @id @default(autoincrement())
+  name            String             @db.VarChar(255)
+  price           Decimal            @db.Decimal(10, 2)
+  deposit         Decimal            @db.Decimal(10, 2)
+  expected_date   DateTime           @db.Date
+  image           String             @db.VarChar(255)
+  spots_total     Int?               @default(100)
+  spots_remaining Int?               @default(100)
+  features        String?            @db.Text
+  description     String?            @db.Text
+  status          pre_orders_status? @default(active)
+  created_at      DateTime           @default(now()) @db.Timestamp(0)
+}
+
+model product_attributes {
+  id             Int        @id @default(autoincrement())
+  product_id     Int
+  attribute_id   Int
+  value          String     @db.VarChar(255)
+  price_modifier Decimal?   @default(0.00) @db.Decimal(10, 2)
+  products       products   @relation(fields: [product_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "product_attributes_ibfk_1")
+  attributes     attributes @relation(fields: [attribute_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "product_attributes_ibfk_2")
+
+  @@index([attribute_id], map: "attribute_id")
+  @@index([product_id], map: "product_id")
+}
+
+model product_tags {
+  product_id Int
+  tag_id     Int
+  products   products @relation(fields: [product_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "product_tags_ibfk_1")
+  tags       tags     @relation(fields: [tag_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "product_tags_ibfk_2")
+
+  @@id([product_id, tag_id])
+  @@index([tag_id], map: "tag_id")
+}
+
+model products {
+  id                 Int                  @id @default(autoincrement())
+  name               String               @db.VarChar(255)
+  slug               String               @unique(map: "slug") @db.VarChar(255)
+  short_description  String?              @db.Text
+  price              Decimal              @db.Decimal(10, 2)
+  original_price     Decimal?             @db.Decimal(10, 2)
+  cost_price         Decimal?             @db.Decimal(10, 2)
+  discount           Int?                 @default(0)
+  category_id        Int?
+  brand_id           Int?
+  model              String?              @db.VarChar(100)
+  sku                String?              @db.VarChar(100)
+  stock              Int?                 @default(0)
+  weight             String?              @db.VarChar(50)
+  weight_unit        String?              @default("Kg") @db.VarChar(20)
+  image              String?              @db.VarChar(255)
+  images             String?              @db.Text
+  description        String?              @db.Text
+  warranty           String?              @db.Text
+  highlights         String?              @db.Text
+  deep_search        String?              @db.Text
+  specs              String?              @db.Text
+  variants           String?              @db.LongText
+  seo_title          String?              @db.VarChar(255)
+  seo_description    String?              @db.Text
+  seo_keywords       String?              @db.Text
+  is_new             Boolean?             @default(false)
+  is_popular         Boolean?             @default(false)
+  is_wholesale       Boolean?             @default(false)
+  facebook_catalog   Boolean?             @default(false)
+  status             products_status?     @default(active)
+  created_at         DateTime             @default(now()) @db.Timestamp(0)
+  reward_points      Int?                 @default(0)
+  product_attributes product_attributes[]
+  product_tags       product_tags[]
+  categories         categories?          @relation(fields: [category_id], references: [id], onUpdate: Restrict, map: "products_ibfk_1")
+  brands             brands?              @relation(fields: [brand_id], references: [id], onUpdate: Restrict, map: "products_ibfk_2")
+  reviews            reviews[]
+
+  @@index([brand_id], map: "brand_id")
+  @@index([category_id], map: "category_id")
+}
+
+model revenue {
+  id                Int                @id @default(autoincrement())
+  category_id       Int?
+  amount            Decimal            @db.Decimal(10, 2)
+  source            String?            @db.VarChar(255)
+  date              DateTime           @db.Date
+  status            revenue_status?    @default(received)
+  notes             String?            @db.Text
+  created_at        DateTime           @default(now()) @db.Timestamp(0)
+  updated_at        DateTime           @default(now()) @db.Timestamp(0)
+  income_categories income_categories? @relation(fields: [category_id], references: [id], onUpdate: Restrict, map: "revenue_ibfk_1")
+
+  @@index([category_id], map: "category_id")
+}
+
+model reviews {
+  id         Int             @id @default(autoincrement())
+  product_id Int
+  user_id    Int?
+  guest_name String?         @db.VarChar(100)
+  rating     Int
+  comment    String?         @db.Text
+  status     reviews_status? @default(pending)
+  created_at DateTime        @default(now()) @db.Timestamp(0)
+  products   products        @relation(fields: [product_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "reviews_ibfk_1")
+  users      users?          @relation(fields: [user_id], references: [id], onUpdate: Restrict, map: "reviews_ibfk_2")
+
+  @@index([product_id], map: "product_id")
+  @@index([user_id], map: "user_id")
+}
+
+model settings {
+  id    Int     @id @default(autoincrement())
+  key   String  @unique(map: "key") @db.VarChar(100)
+  value String? @db.Text
+  group String? @default("general") @db.VarChar(50)
+}
+
+model sms_settings {
+  id    Int     @id @default(autoincrement())
+  key   String  @unique(map: "key") @db.VarChar(100)
+  value String? @db.Text
+  group String? @default("general") @db.VarChar(50)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model social_links {
+  id         Int                  @id @default(autoincrement())
+  platform   String               @db.VarChar(50)
+  url        String               @db.VarChar(255)
+  icon       String?              @db.VarChar(50)
+  order      Int?                 @default(0)
+  status     social_links_status? @default(active)
+  created_at DateTime             @default(now()) @db.Timestamp(0)
+}
+
+model support_tickets {
+  id             Int                       @id @default(autoincrement())
+  user_id        Int?
+  guest_email    String?                   @db.VarChar(100)
+  guest_name     String?                   @db.VarChar(100)
+  subject        String                    @db.VarChar(255)
+  priority       support_tickets_priority? @default(Medium)
+  status         support_tickets_status?   @default(Open)
+  assigned_to    Int?
+  created_at     DateTime                  @default(now()) @db.Timestamp(0)
+  updated_at     DateTime                  @default(now()) @db.Timestamp(0)
+  last_reply_at  DateTime?                 @db.Timestamp(0)
+  message        String                    @db.Text
+  ticket_replies ticket_replies[]
+}
+
+model tags {
+  id           Int            @id @default(autoincrement())
+  name         String         @db.VarChar(100)
+  slug         String         @unique(map: "slug") @db.VarChar(100)
+  color        String?        @db.VarChar(20)
+  status       String?        @default("publish") @db.VarChar(20)
+  created_at   DateTime       @default(now()) @db.Timestamp(0)
+  product_tags product_tags[]
+}
+
+model ticket_replies {
+  id              Int             @id @default(autoincrement())
+  ticket_id       Int
+  user_id         Int?
+  is_admin        Boolean?        @default(false)
+  message         String          @db.Text
+  created_at      DateTime        @default(now()) @db.Timestamp(0)
+  support_tickets support_tickets @relation(fields: [ticket_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "ticket_replies_ibfk_1")
+
+  @@index([ticket_id], map: "ticket_id")
+}
+
+model transactions {
+  id             Int                  @id @default(autoincrement())
+  transaction_id String               @unique(map: "transaction_id") @db.VarChar(50)
+  order_id       Int?
+  user_id        Int?
+  payer_name     String?              @db.VarChar(255)
+  amount         Decimal              @db.Decimal(10, 2)
+  type           transactions_type?   @default(payment)
+  method         String?              @default("cash") @db.VarChar(50)
+  status         transactions_status? @default(completed)
+  note           String?              @db.Text
+  created_at     DateTime             @default(now()) @db.Timestamp(0)
+  orders         orders?              @relation(fields: [order_id], references: [id], onUpdate: Restrict, map: "transactions_ibfk_1")
+
+  @@index([order_id], map: "order_id")
+}
+
+model tutorials {
+  id         Int               @id @default(autoincrement())
+  title      String            @db.VarChar(255)
+  video_url  String            @db.VarChar(255)
+  thumbnail  String?           @db.VarChar(255)
+  tags       String?           @db.Text
+  status     tutorials_status? @default(active)
+  created_at DateTime          @default(now()) @db.Timestamp(0)
+  updated_at DateTime          @default(now()) @db.Timestamp(0)
+}
+
+model users {
+  id              Int       @id @default(autoincrement())
+  name            String    @db.VarChar(100)
+  email           String    @unique(map: "email") @db.VarChar(100)
+  image           String?   @db.VarChar(255)
+  phone           String?   @db.VarChar(20)
+  password        String    @db.VarChar(255)
+  address         String?   @db.Text
+  points          Int?      @default(0)
+  status          String?   @default("Active") @db.VarChar(20)
+  created_at      DateTime  @default(now()) @db.Timestamp(0)
+  social_provider String?   @db.VarChar(20)
+  social_id       String?   @db.VarChar(100)
+  avatar          String?   @db.VarChar(255)
+  reward_points   Int?      @default(0)
+  email_verified  Boolean?  @default(false)
+  reviews         reviews[]
+
+  @@index([social_provider, social_id], map: "social_lookup")
+  @@index([social_provider, social_id], map: "idx_social_provider_id")
+}
+
+enum blacklist_type {
+  phone
+  ip
+  email
+}
+
+enum coupons_type {
+  percentage
+  fixed
+}
+
+enum payouts_status {
+  pending
+  processing
+  completed
+  failed
+  cancelled
+}
+
+enum admins_status {
+  active
+  inactive
+}
+
+enum footer_links_status {
+  active
+  inactive
+}
+
+enum landing_pages_status {
+  Published
+  Draft
+  Scheduled
+}
+
+enum pages_status {
+  published
+  draft
+}
+
+enum revenue_status {
+  pending
+  received
+  refunded
+}
+
+enum social_links_status {
+  active
+  inactive
+}
+
+enum support_tickets_priority {
+  Low
+  Medium
+  High
+}
+
+enum tutorials_status {
+  active
+  inactive
+}
+
+enum features_status {
+  active
+  inactive
+}
+
+enum hero_banners_position {
+  main
+  side_top
+  side_bottom
+}
+
+enum reviews_status {
+  pending
+  approved
+  rejected
+}
+
+enum support_tickets_status {
+  Open
+  Pending
+  Resolved
+}
+
+enum transactions_type {
+  payment
+  refund
+  payout
+}
+
+enum banners_status {
+  active
+  inactive
+}
+
+enum carousels_status {
+  active
+  inactive
+}
+
+enum popups_frequency {
+  once
+  session
+  always
+}
+
+enum hero_banners_status {
+  active
+  inactive
+}
+
+enum popups_status {
+  active
+  inactive
+}
+
+enum transactions_status {
+  completed
+  processing
+  failed
+  pending
+}
+
+enum coupons_status {
+  active
+  inactive
+}
+
+enum orders_p_status {
+  unpaid
+  paid
+}
+
+enum pre_orders_status {
+  active
+  inactive
+  sold_out
+}
+
+enum blogs_status {
+  draft
+  published
+}
+
+enum products_status {
+  active
+  inactive
+}

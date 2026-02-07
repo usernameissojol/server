@@ -1,0 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const popup_controller_1 = require("../controllers/popup.controller");
+const auth_middleware_1 = require("../middleware/auth.middleware");
+const upload_1 = require("../middleware/upload");
+const router = (0, express_1.Router)();
+router.get("/", auth_middleware_1.isAdmin, popup_controller_1.getPopups);
+router.post("/", auth_middleware_1.isAdmin, upload_1.upload.single("image"), popup_controller_1.createPopup);
+router.put("/:id", auth_middleware_1.isAdmin, upload_1.upload.single("image"), popup_controller_1.updatePopup);
+router.delete("/:id", auth_middleware_1.isAdmin, popup_controller_1.deletePopup);
+exports.default = router;
